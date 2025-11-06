@@ -28,6 +28,7 @@ dist/
 # ======================================
 datasets/*.zip
 datasets/*.xlsx
+datasets/*.xlsm
 datasets/*.parquet
 datasets/*.json
 datasets/*.sav
