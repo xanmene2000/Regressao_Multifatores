@@ -38,7 +38,7 @@ def filter_data(df, start, end):
 def _fmt_bcb_date(s):
     return pd.to_datetime(s).strftime("%d/%m/%Y")
 
-def get_bcb_series(codigo_sgs: int, start="2015-01-01", end="2024-12-31"):
+def get_bcb_series(codigo_sgs: int, start, end):
     """
     Busca série do SGS/BCB. Datas devem ser dd/mm/aaaa.
     Se der 400, tenta sem datas e filtra localmente.
@@ -67,10 +67,10 @@ def get_bcb_series(codigo_sgs: int, start="2015-01-01", end="2024-12-31"):
     data = data.dropna().set_index("data").sort_index()
 
     # Filtra localmente
-    data = data.loc[(data.index >= pd.to_datetime(start)) & (data.index <= pd.to_datetime(end))]
+    data = filter_data(data, start, end)
     return data
 
-def prepare_ipca(start="2019-07-01", end="2025-06-30"):
+def prepare_ipca(start, end):
     """
     IPCA var. mensal (%), código 433. Converte para DECIMAL ao mês.
     """
@@ -80,9 +80,9 @@ def prepare_ipca(start="2019-07-01", end="2025-06-30"):
     return s
 
 
-def monthly_to_daily_equivalent(ipca_monthly: pd.Series, target_index, columnName) -> pd.Series:
+def monthly_to_daily_equivalent(data_monthly: pd.Series, target_index, columnName) -> pd.Series:
     """
-    Converte IPCA mensal (decimal ao mês) para taxa diária equivalente,
+    Converte dados mensais (decimal ao mês) para taxa diária equivalente,
     distribuindo por *exatamente* os dias presentes em `target_index`.
     A composição diária de cada mês reproduz o IPCA mensal original.
     """
@@ -92,7 +92,7 @@ def monthly_to_daily_equivalent(ipca_monthly: pd.Series, target_index, columnNam
     df["month"] = df.index.to_period("M")
 
     # 2) traz a taxa mensal para cada linha (mês correspondente)
-    m = ipca_monthly.copy().dropna()
+    m = data_monthly.copy().dropna()
     m.index = m.index.to_period("M")
     df = df.join(m.rename("m_rate"), on="month")
 
@@ -100,13 +100,13 @@ def monthly_to_daily_equivalent(ipca_monthly: pd.Series, target_index, columnNam
     df["n_in_month"] = df.groupby("month")["month"].transform("size")
 
     # 4) taxa diária equivalente que recompõe exatamente o mês
-    df["ipca_daily"] = (1.0 + df["m_rate"]).pow(1.0 / df["n_in_month"]) - 1.0
+    df["data_daily"] = (1.0 + df["m_rate"]).pow(1.0 / df["n_in_month"]) - 1.0
 
-    out = df["ipca_daily"].rename(columnName)
+    out = df["data_daily"].rename(columnName)
     return out
 
 
-def prepare_pib_proxy(start="2019-07-01", end="2025-06-30"):
+def prepare_pib_proxy(start, end):
     """
     Proxy de PIB: IBC-Br dessazonalizado (cód. 24363, nível-índice).
     Transformamos em CRESCIMENTO M/M: pct_change mensal (decimal).
