@@ -1,0 +1,54 @@
+# ======================================
+# IGNORAR CACHE E ARQUIVOS TEMPORÁRIOS
+# ======================================
+__pycache__/
+*.py[cod]
+*.so
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*$py.class
+
+# ======================================
+# IGNORAR AMBIENTES VIRTUAIS
+# ======================================
+.venv/
+venv/
+env/
+ENV/
+pip-wheel-metadata/
+build/
+dist/
+*.egg-info/
+
+# ======================================
+# IGNORAR ARQUIVOS DE DADOS GRANDES
+# ======================================
+datasets/*.zip
+datasets/*.xlsx
+datasets/*.parquet
+datasets/*.json
+datasets/*.sav
+datasets/temp_*.csv
+
+# ======================================
+# IGNORAR NOTEBOOKS TEMPORÁRIOS
+# ======================================
+.ipynb_checkpoints/
+
+# ======================================
+# IGNORAR CONFIGURAÇÕES LOCAIS (VS Code, IDEs)
+# ======================================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ======================================
+# IGNORAR ARQUIVOS DO WINDOWS / MAC
+# ======================================
+.DS_Store
+Thumbs.db
+desktop.ini
