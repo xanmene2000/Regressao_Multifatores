@@ -1,5 +1,4 @@
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
-import yfinance as yf
 from datetime import datetime
 from statsmodels.api import OLS, add_constant
 from statsmodels.stats.outliers_influence import variance_inflation_factor
