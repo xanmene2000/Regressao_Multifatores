@@ -80,30 +80,63 @@ def prepare_ipca(start, end):
     return s
 
 
-def monthly_to_daily_equivalent(data_monthly: pd.Series, target_index, columnName) -> pd.Series:
+def periodic_to_daily_equivalent(
+    data_periodic: pd.Series,
+    target_index,
+    column_name: str,
+    return_type: str = "simple",  # "simple" ou "log"
+    freq: str = "M",              # "M" para mensal, "W" para semanal
+    release_lag: str = "shift1"   # "shift1" aplica a taxa no período seguinte (evita look-ahead)
+) -> pd.Series:
     """
-    Converte dados mensais (decimal ao mês) para taxa diária equivalente,
-    distribuindo por *exatamente* os dias presentes em `target_index`.
-    A composição diária de cada mês reproduz o IPCA mensal original.
+    Converte retornos periódicos (mensais ou semanais) em equivalentes diários,
+    distribuídos apenas pelos dias do período-alvo. Opcionalmente aplica defasagem
+    de divulgação para evitar look-ahead.
+    - return_type: "simple" usa (1+r)^(1/n)-1 ; "log" usa g/n.
+    - release_lag: "none" aplica no próprio período; "shift1" aplica no período seguinte.
     """
     # 1) índice diário alvo, ordenado
     idx = pd.DatetimeIndex(target_index).sort_values()
     df = pd.DataFrame(index=idx)
-    df["month"] = df.index.to_period("M")
 
-    # 2) traz a taxa mensal para cada linha (mês correspondente)
-    m = data_monthly.copy().dropna()
-    m.index = m.index.to_period("M")
-    df = df.join(m.rename("m_rate"), on="month")
+    # 2) período conforme freq
+    if freq.upper().startswith("M"):
+        period = df.index.to_period("M")
+    elif freq.upper().startswith("W"):
+        period = df.index.to_period("W-SUN")  # ajuste a âncora se quiser
+    else:
+        raise ValueError("freq deve ser 'M' (mensal) ou 'W' (semanal).")
 
-    # 3) conta de dias (do SEU índice) em cada mês
-    df["n_in_month"] = df.groupby("month")["month"].transform("size")
+    df["period"] = period
 
-    # 4) taxa diária equivalente que recompõe exatamente o mês
-    df["data_daily"] = (1.0 + df["m_rate"]).pow(1.0 / df["n_in_month"]) - 1.0
+    # 3) prepara a série periódica
+    s = data_periodic.copy().dropna()
+    s.index = s.index.to_period("M" if freq.upper().startswith("M") else "W-SUN")
 
-    out = df["data_daily"].rename(columnName)
-    return out
+    # 4) aplica defasagem de divulgação para evitar look-ahead
+    if release_lag == "shift1":
+        s = s.shift(1)  # usa a taxa do mês/semana anterior no período corrente
+    elif release_lag == "none":
+        pass
+    else:
+        raise ValueError("release_lag deve ser 'none' ou 'shift1'.")
+
+    # 5) traz a taxa do período para cada dia, conta n por período
+    df = df.join(s.rename("r_period"), on="period")
+    df["n_in_period"] = df.groupby("period")["period"].transform("size")
+
+    # 6) distribui: simple vs log
+    if return_type == "simple":
+        # r_d = (1+r_m)^(1/n) - 1
+        df[column_name] = (1.0 + df["r_period"]).pow(1.0 / df["n_in_period"]) - 1.0
+    elif return_type == "log":
+        # g_d = g_m / n ; se quiser simples depois: np.expm1(g_d)
+        g_d = (df["r_period"] / df["n_in_period"])
+        df[column_name] = g_d  # permaneça em log-return diário
+    else:
+        raise ValueError("return_type deve ser 'simple' ou 'log'.")
+
+    return df[column_name]
 
 
 def prepare_pib_proxy(start, end):
@@ -168,4 +201,3 @@ def get_usd_ptax(start, end):
     ptax_ret.name = "USD_PTAX"
 
     return ptax_ret
-    
