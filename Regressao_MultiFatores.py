@@ -1,4 +1,4 @@
-from functions import *
+import functions as fn
 import os
 
 # DEFINIÇÃO DE VARIAVEIS GLOBAIS
@@ -17,9 +17,9 @@ if fred_api_key is None:
 
 # Obtem os dados dos fatores (x)
 # Usar reindex e ffill nos dados originais para alinhar com o indice do ativo alvo
-brent = filter_data(get_api_fred(api_key=fred_api_key, series_id='DCOILBRENTEU'),start=INICIO,end=FIM)
+brent = fn.filter_data(fn.get_api_fred(api_key=fred_api_key, series_id='DCOILBRENTEU'),start=INICIO,end=FIM)
 brent_ret = brent.pct_change()
 
-UST_10Y = filter_data(get_api_fred(series_id='DGS10',api_key=fred_api_key)/100,start=INICIO,end=FIM)
+UST_10Y = fn.filter_data(fn.get_api_fred(series_id='DGS10',api_key=fred_api_key)/100,start=INICIO,end=FIM)
 UST_10Y_diff = UST_10Y.diff()
 
