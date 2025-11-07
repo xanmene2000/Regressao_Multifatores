@@ -8,6 +8,44 @@ from statsmodels.graphics.gofplots import qqplot
 import requests
 import datetime as dt
 from urllib.parse import quote
+import os
+import sys
+
+
+def check_api_keys(required_keys: list[str]) -> dict[str, str]:
+    """
+    Verifica se todas as variáveis de ambiente das APIs foram definidas.
+    Retorna um dicionário {nome_da_api: chave} ou encerra o programa com erro amigável.
+
+    Parâmetros
+    ----------
+    required_keys : list
+        Lista com os nomes exatos das variáveis de ambiente (ex: ["FRED_API_KEY", "EXCHANGE_API_KEY"]).
+
+    Retorno
+    -------
+    dict : {key_name: key_value}
+        Dicionário contendo as chaves lidas do ambiente.
+    """
+    missing = []
+    keys = {}
+
+    for k in required_keys:
+        val = os.getenv(k)
+        if not val:
+            missing.append(k)
+        else:
+            keys[k] = val
+
+    if missing:
+        print("\nERRO: Uma ou mais variáveis de API não foram configuradas:\n")
+        for m in missing:
+            print(f"   - {m} (adicione no seu sistema ou .env)")
+        print("\n💡 Exemplo de como configurar:")
+        print('   setx FRED_API_KEY "sua_chave_aqui"   (Windows)')
+        sys.exit(1)
+
+    return keys
 
 
 def get_nefin_br_values(path='datasets\nefin_factors_br.csv'):
