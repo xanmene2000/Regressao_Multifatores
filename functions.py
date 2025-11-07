@@ -201,3 +201,48 @@ def get_usd_ptax(start, end):
     ptax_ret.name = "USD_PTAX"
 
     return ptax_ret
+
+def get_api_fred(series_id: str, api_key: str) -> pd.Series:
+    """
+    Baixa dados de uma série do FRED via API e retorna um pandas.Series limpo.
+
+    Parâmetros:
+    -----------
+    series_id : str
+        Código da série no FRED (ex: "DCOILBRENTEU" para Brent).
+    api_key : str
+        Chave da API FRED (pode vir de os.getenv("FRED_API_KEY")).
+    
+    Retorno:
+    --------
+    pandas.Series com índice datetime e valores float.
+    """
+
+    url = (
+        f"https://api.stlouisfed.org/fred/series/observations?"
+        f"series_id={series_id}&api_key={api_key}&file_type=json&sort_order=asc"
+    )
+
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        data = response.json().get("observations", [])
+    except Exception as e:
+        raise RuntimeError(f"Erro ao acessar a API FRED ({series_id}): {e}")
+
+    if not data:
+        raise ValueError(f"Nenhum dado retornado para a série {series_id}")
+
+    # Converte em DataFrame
+    df = pd.DataFrame(data)[["date", "value"]]
+
+    # Trata valores
+    df["value"] = pd.to_numeric(df["value"].replace(".", pd.NA), errors="coerce")
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    df = df.dropna(subset=["date", "value"])
+
+    # Define índice e frequência
+    s = df.set_index("date")["value"].sort_index()
+    
+    s.name = series_id
+    return s
