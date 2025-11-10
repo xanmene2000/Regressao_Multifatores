@@ -12,6 +12,9 @@ import os
 import sys
 
 
+def standardize(series: pd.Series) -> pd.Series:
+    return (series - series.mean()) / series.std()
+
 def check_api_keys(required_keys: list[str]) -> dict[str, str]:
     """
     Verifica se todas as variáveis de ambiente das APIs foram definidas.
@@ -47,7 +50,6 @@ def check_api_keys(required_keys: list[str]) -> dict[str, str]:
 
     return keys
 
-
 def get_nefin_br_values(path='datasets\nefin_factors_br.csv'):
     # Leitura do CSV
     nefin_daily = pd.read_csv(path)
@@ -71,7 +73,6 @@ def get_nefin_br_values(path='datasets\nefin_factors_br.csv'):
 
 def filter_data(df, start, end):
     return df.loc[(df.index >= start) & (df.index <= end)]
-
 
 def _fmt_bcb_date(s):
     return pd.to_datetime(s).strftime("%d/%m/%Y")
@@ -116,7 +117,6 @@ def prepare_ipca(start, end):
     s = df["valor"] / 100.0
     s.name = "IPCA"
     return s
-
 
 def periodic_to_daily_equivalent(
     data_periodic: pd.Series,
@@ -176,7 +176,6 @@ def periodic_to_daily_equivalent(
 
     return df[column_name]
 
-
 def prepare_pib_proxy(start, end):
     """
     Proxy de PIB: IBC-Br dessazonalizado (cód. 24363, nível-índice).
@@ -187,7 +186,6 @@ def prepare_pib_proxy(start, end):
     s = level.pct_change()
     s.name = "PIB"
     return s
-
 
 def get_usd_ptax(start, end):
     """
@@ -284,3 +282,4 @@ def get_api_fred(series_id: str, api_key: str) -> pd.Series:
     
     s.name = series_id
     return s
+
