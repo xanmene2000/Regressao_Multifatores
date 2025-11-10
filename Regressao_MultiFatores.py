@@ -30,4 +30,7 @@ vix = fn.filter_data(fn.get_api_fred(series_id='VIXCLS', api_key=api_keys['FRED_
 vix = fn.standardize(vix)
 
 dxy = fn.filter_data(fn.get_api_fred(api_key=api_keys["FRED_API_KEY"], series_id='DTWEXBGS'),start=INICIO,end=FIM)
-dxy = brent.pct_change()
+dxy = dxy.pct_change()
+
+usd_cny = fn.filter_data(fn.get_api_fred(api_key=api_keys["FRED_API_KEY"], series_id='DEXCHUS'),start=INICIO,end=FIM)
+usd_cny = usd_cny.pct_change()
