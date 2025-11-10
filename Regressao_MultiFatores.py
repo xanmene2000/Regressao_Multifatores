@@ -25,3 +25,6 @@ brent_ret = brent.pct_change()
 
 UST_10Y = fn.filter_data(fn.get_api_fred(series_id='DGS10',api_key=api_keys["FRED_API_KEY"])/100,start=INICIO,end=FIM)
 UST_10Y_diff = UST_10Y.diff()
+
+vix = fn.filter_data(fn.get_api_fred(series_id='VIXCLS', api_key=api_keys['FRED_API_KEY']), start=INICIO, end=FIM)
+vix = fn.standardize(vix)
