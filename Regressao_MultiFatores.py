@@ -4,7 +4,7 @@ import os
 # DEFINIÇÃO DE VARIAVEIS GLOBAIS
 TICKER = '' # Nome do ativo que irá no modelo (y)
 SETOR = [] # Nome dos ativos do mesmo setor
-INICIO, FIM = '2014-12-31', '2025-06-30'
+INICIO, FIM = '2014-11-30', '2025-06-30'
 
 # Pega chaves das API's nas variaveis do sitema
 # Define todas as APIs usadas no projeto
@@ -34,3 +34,8 @@ dxy = dxy.pct_change()
 
 usd_cny = fn.filter_data(fn.get_api_fred(api_key=api_keys["FRED_API_KEY"], series_id='DEXCHUS'),start=INICIO,end=FIM)
 usd_cny = usd_cny.pct_change()
+
+pmi_china = ''
+
+ind_prod = fn.filter_data(fn.get_api_fred(series_id='INDPRO', api_key=api_keys['FRED_API_KEY']), start=INICIO, end=FIM)
+ind_prod = fn.align_index(daily_series=dxy,monthly_series=fn.standardize(ind_prod).shift(1)).dropna()
