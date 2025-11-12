@@ -283,3 +283,13 @@ def get_api_fred(series_id: str, api_key: str) -> pd.Series:
     s.name = series_id
     return s
 
+def align_index(daily_series, monthly_series) -> pd.Series:
+    # Alinhar com merge_asof
+    df_ajusted = pd.merge_asof(
+        daily_series.sort_index(),
+        monthly_series.sort_index(),
+        left_index=True,
+        right_index=True,
+        direction='backward'
+    )
+    return df_ajusted[monthly_series.name]
