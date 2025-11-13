@@ -309,3 +309,49 @@ def read_pmi_china(path: str, column: str = 'ActualValue') -> pd.Series:
     s = df[column].dropna()
     
     return s
+
+def get_cftc_mm_nasdaq(api_key: str, code: str) -> pd.Series:
+    """
+    Retorna série semanal padronizada (z-score) do Net Managed Money
+    para um contrato CFTC via Nasdaq Data Link (QDL/FON).
+
+    - code: contract_code (string), ex: "085692" para cobre
+    - Usa type=F_ALL (Futures Only, categoria ALL)
+    - Faz: Net = longs - shorts
+           shift(1) para evitar look-ahead
+           padronização (média 0, desvio 1)
+    """
+
+    base_url = "https://data.nasdaq.com/api/v3/datatables/QDL/FON"
+
+    params = {
+        "contract_code": code,
+        "type": "F_ALL",  # Futures Only, ALL
+        "qopts.columns": "date,money_manager_longs,money_manager_shorts",
+        "api_key": api_key,
+    }
+
+    r = requests.get(base_url, params=params, timeout=30)
+    r.raise_for_status()
+    j = r.json()["datatable"]
+
+    if not j["data"]:
+        raise ValueError(f"Nenhum dado retornado para contract_code={code}")
+
+    cols = [c["name"] for c in j["columns"]]
+    df = pd.DataFrame(j["data"], columns=cols)
+
+    # datas e ordenação
+    df["date"] = pd.to_datetime(df["date"])
+    df = df.set_index("date").sort_values("date")
+
+    # garante numérico
+    df["money_manager_longs"] = pd.to_numeric(df["money_manager_longs"], errors="coerce")
+    df["money_manager_shorts"] = pd.to_numeric(df["money_manager_shorts"], errors="coerce")
+
+    # Net Managed Money
+    df["mm_net"] = df["money_manager_longs"] - df["money_manager_shorts"]
+
+    s = df["mm_net"]
+    
+    return s
