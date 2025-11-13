@@ -35,7 +35,9 @@ dxy = dxy.pct_change()
 usd_cny = fn.filter_data(fn.get_api_fred(api_key=api_keys["FRED_API_KEY"], series_id='DEXCHUS'),start=INICIO,end=FIM)
 usd_cny = usd_cny.pct_change()
 
-pmi_china = ''
-
 ind_prod = fn.filter_data(fn.get_api_fred(series_id='INDPRO', api_key=api_keys['FRED_API_KEY']), start=INICIO, end=FIM)
-ind_prod = fn.align_index(daily_series=dxy,monthly_series=fn.standardize(ind_prod).shift(1)).dropna()
+ind_prod = fn.align_index(daily_series=dxy, monthly_series=fn.standardize(ind_prod).shift(1)).dropna()
+
+pmi_china = fn.filter_data(fn.read_pmi_china(path='datasets\china-caixin-manufacturing-pmi.csv'),start=INICIO, end=FIM)
+pmi_china = fn.align_index(daily_series=dxy, monthly_series=fn.standardize(pmi_china).shift(1)).dropna()
+print(pmi_china)
