@@ -293,3 +293,19 @@ def align_index(daily_series, monthly_series) -> pd.Series:
         direction='backward'
     )
     return df_ajusted[monthly_series.name]
+
+def read_pmi_china(path: str, column: str = 'ActualValue') -> pd.Series:
+    df = pd.read_csv(path, sep='\t')
+
+    # Converte datas e define como índice
+    df["Date"] = pd.to_datetime(df["Date"])
+    df = df.set_index("Date").sort_index()
+
+    df = df.drop(columns=["ForecastValue", "PreviousValue"])
+
+    # Remove duplicatas e converte para float
+    df[column] = df[column].astype(float)
+
+    s = df[column].dropna()
+    
+    return s
