@@ -1,6 +1,7 @@
 import functions as fn
 import os
 
+
 # DEFINIÇÃO DE VARIAVEIS GLOBAIS
 TICKER = '' # Nome do ativo que irá no modelo (y)
 SETOR = [] # Nome dos ativos do mesmo setor
@@ -10,7 +11,7 @@ INICIO, FIM = '2014-11-30', '2025-06-30'
 # Define todas as APIs usadas no projeto
 REQUIRED_KEYS = [
     "FRED_API_KEY",
-    "exchangeRate_API_KEY",
+    "NASDAQ_API_KEY",
 ]
 
 api_keys = fn.check_api_keys(REQUIRED_KEYS)
@@ -21,10 +22,10 @@ api_keys = fn.check_api_keys(REQUIRED_KEYS)
 # Obtem os dados dos fatores (x)
 # Usar reindex e ffill nos dados originais para alinhar com o indice do ativo alvo
 brent = fn.filter_data(fn.get_api_fred(api_key=api_keys["FRED_API_KEY"], series_id='DCOILBRENTEU'),start=INICIO,end=FIM)
-brent_ret = brent.pct_change()
+brent = brent.pct_change()
 
 UST_10Y = fn.filter_data(fn.get_api_fred(series_id='DGS10',api_key=api_keys["FRED_API_KEY"])/100,start=INICIO,end=FIM)
-UST_10Y_diff = UST_10Y.diff()
+UST_10Y= UST_10Y.diff()
 
 vix = fn.filter_data(fn.get_api_fred(series_id='VIXCLS', api_key=api_keys['FRED_API_KEY']), start=INICIO, end=FIM)
 vix = fn.standardize(vix)
@@ -40,4 +41,6 @@ ind_prod = fn.align_index(daily_series=dxy, monthly_series=fn.standardize(ind_pr
 
 pmi_china = fn.filter_data(fn.read_pmi_china(path='datasets\china-caixin-manufacturing-pmi.csv'),start=INICIO, end=FIM)
 pmi_china = fn.align_index(daily_series=dxy, monthly_series=fn.standardize(pmi_china).shift(1)).dropna()
-print(pmi_china)
+
+cftc_mm_copper = fn.filter_data(fn.get_cftc_mm_nasdaq(api_key=api_keys['NASDAQ_API_KEY'],code='085692'),start=INICIO, end=FIM)
+cftc_mm_copper = fn.align_index(daily_series=dxy, monthly_series=fn.standardize(cftc_mm_copper).shift(1)).dropna()
