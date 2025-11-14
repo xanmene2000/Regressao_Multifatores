@@ -22,28 +22,28 @@ api_keys = fn.check_api_keys(REQUIRED_KEYS)
 
 # Obtem os dados dos fatores (x)
 # Usar reindex e ffill nos dados originais para alinhar com o indice do ativo alvo
-brent = fn.filter_data(fn.get_api_fred(api_key=api_keys["FRED_API_KEY"], series_id='DCOILBRENTEU'),start=INICIO,end=FIM)
+brent = fn.filter_data(fn.get_api_fred(api_key=api_keys["FRED_API_KEY"], series_id='DCOILBRENTEU', name="BRENT"),start=INICIO,end=FIM)
 brent = brent.pct_change()
 
-UST_10Y = fn.filter_data(fn.get_api_fred(series_id='DGS10',api_key=api_keys["FRED_API_KEY"])/100,start=INICIO,end=FIM)
+UST_10Y = fn.filter_data(fn.get_api_fred(series_id='DGS10',api_key=api_keys["FRED_API_KEY"], name="UST_10Y")/100,start=INICIO,end=FIM)
 UST_10Y= UST_10Y.diff()
 
-vix = fn.filter_data(fn.get_api_fred(series_id='VIXCLS', api_key=api_keys['FRED_API_KEY']), start=INICIO, end=FIM)
+vix = fn.filter_data(fn.get_api_fred(series_id='VIXCLS', api_key=api_keys['FRED_API_KEY'], name="VIX"), start=INICIO, end=FIM)
 vix = fn.standardize(vix)
 
-dxy = fn.filter_data(fn.get_api_fred(api_key=api_keys["FRED_API_KEY"], series_id='DTWEXBGS'),start=INICIO,end=FIM)
+dxy = fn.filter_data(fn.get_api_fred(api_key=api_keys["FRED_API_KEY"], series_id='DTWEXBGS', name="DXY"),start=INICIO,end=FIM)
 dxy = dxy.pct_change()
 
-usd_cny = fn.filter_data(fn.get_api_fred(api_key=api_keys["FRED_API_KEY"], series_id='DEXCHUS'),start=INICIO,end=FIM)
+usd_cny = fn.filter_data(fn.get_api_fred(api_key=api_keys["FRED_API_KEY"], series_id='DEXCHUS', name="USD/CNY"),start=INICIO,end=FIM)
 usd_cny = usd_cny.pct_change()
 
-ind_prod = fn.filter_data(fn.get_api_fred(series_id='INDPRO', api_key=api_keys['FRED_API_KEY']), start=INICIO, end=FIM)
+ind_prod = fn.filter_data(fn.get_api_fred(series_id='INDPRO', api_key=api_keys['FRED_API_KEY'], name="IND_PROD"), start=INICIO, end=FIM)
 ind_prod = fn.align_index(daily_series=dxy, monthly_series=fn.standardize(ind_prod).shift(1)).dropna()
 
 pmi_china = fn.filter_data(fn.read_pmi_china(path='datasets\china-caixin-manufacturing-pmi.csv'),start=INICIO, end=FIM)
 pmi_china = fn.align_index(daily_series=dxy, monthly_series=fn.standardize(pmi_china).shift(1)).dropna()
 
-cftc_mm_copper = fn.filter_data(fn.get_cftc_mm_nasdaq(api_key=api_keys['NASDAQ_API_KEY'],code='085692'),start=INICIO, end=FIM)
+cftc_mm_copper = fn.filter_data(fn.get_cftc_mm_nasdaq(api_key=api_keys['NASDAQ_API_KEY'],code='085692', name="MM_COPPER"),start=INICIO, end=FIM)
 cftc_mm_copper = fn.align_index(daily_series=dxy, monthly_series=fn.standardize(cftc_mm_copper).shift(1)).dropna()
 
 
