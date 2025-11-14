@@ -1,11 +1,12 @@
 import functions as fn
+import pandas as pd
 import os
 
 
 # DEFINIÇÃO DE VARIAVEIS GLOBAIS
 TICKER = '' # Nome do ativo que irá no modelo (y)
 SETOR = [] # Nome dos ativos do mesmo setor
-INICIO, FIM = '2014-11-30', '2025-06-30'
+INICIO, FIM = '2014-11-30', '2025-10-30'
 
 # Pega chaves das API's nas variaveis do sitema
 # Define todas as APIs usadas no projeto
@@ -44,3 +45,19 @@ pmi_china = fn.align_index(daily_series=dxy, monthly_series=fn.standardize(pmi_c
 
 cftc_mm_copper = fn.filter_data(fn.get_cftc_mm_nasdaq(api_key=api_keys['NASDAQ_API_KEY'],code='085692'),start=INICIO, end=FIM)
 cftc_mm_copper = fn.align_index(daily_series=dxy, monthly_series=fn.standardize(cftc_mm_copper).shift(1)).dropna()
+
+
+# Cria a variavel X_all do modelo, contendo todos fatores
+# Depois, para cada commoditie, usará fatores especificos desta variavel
+X_all = pd.concat([
+    brent,
+    UST_10Y,
+    vix,
+    dxy,
+    usd_cny,
+    ind_prod,
+    pmi_china,
+    cftc_mm_copper
+], axis=1).dropna()
+
+print(X_all)
