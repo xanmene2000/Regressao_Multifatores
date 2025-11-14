@@ -238,7 +238,7 @@ def get_usd_ptax(start, end):
 
     return ptax_ret
 
-def get_api_fred(series_id: str, api_key: str) -> pd.Series:
+def get_api_fred(series_id: str, name: str, api_key: str) -> pd.Series:
     """
     Baixa dados de uma série do FRED via API e retorna um pandas.Series limpo.
 
@@ -280,7 +280,7 @@ def get_api_fred(series_id: str, api_key: str) -> pd.Series:
     # Define índice e frequência
     s = df.set_index("date")["value"].sort_index()
     
-    s.name = series_id
+    s.name = name
     return s
 
 def align_index(daily_series, monthly_series) -> pd.Series:
@@ -307,10 +307,11 @@ def read_pmi_china(path: str, column: str = 'ActualValue') -> pd.Series:
     df[column] = df[column].astype(float)
 
     s = df[column].dropna()
+    s.name = 'PMI_CHINA'
     
     return s
 
-def get_cftc_mm_nasdaq(api_key: str, code: str) -> pd.Series:
+def get_cftc_mm_nasdaq(api_key: str, code: str, name: str) -> pd.Series:
     """
     Retorna série semanal padronizada (z-score) do Net Managed Money
     para um contrato CFTC via Nasdaq Data Link (QDL/FON).
@@ -353,5 +354,7 @@ def get_cftc_mm_nasdaq(api_key: str, code: str) -> pd.Series:
     df["mm_net"] = df["money_manager_longs"] - df["money_manager_shorts"]
 
     s = df["mm_net"]
+
+    s.name = name
     
     return s
