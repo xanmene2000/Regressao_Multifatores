@@ -1,6 +1,7 @@
 import functions as fn
 import pandas as pd
 import os
+from statsmodels.api import OLS, add_constant
 
 
 # DEFINIÇÃO DE VARIAVEIS GLOBAIS
@@ -18,7 +19,11 @@ REQUIRED_KEYS = [
 api_keys = fn.check_api_keys(REQUIRED_KEYS)
 
 # Obtem os dados do ativo alvo (y)
+copper_3M = fn.filter_data(fn.get_datasets_csv(path="datasets/3M_Copper_LME.csv", name="COPPER_3M"), start=INICIO, end=FIM)
+copper_3M = copper_3M.pct_change()
 
+aluminium_3M = fn.filter_data(fn.get_datasets_csv(path="datasets/3M_Aluminium_LME.csv", name="ALUMINIUM_3M"), start=INICIO, end=FIM)
+aluminium_3M = aluminium_3M.pct_change()
 
 # Obtem os dados dos fatores (x)
 # Usar reindex e ffill nos dados originais para alinhar com o indice do ativo alvo
@@ -46,10 +51,23 @@ pmi_china = fn.align_index(daily_series=dxy, monthly_series=fn.standardize(pmi_c
 cftc_mm_copper = fn.filter_data(fn.get_cftc_mm_nasdaq(api_key=api_keys['NASDAQ_API_KEY'],code='085692', name="MM_COPPER"),start=INICIO, end=FIM)
 cftc_mm_copper = fn.align_index(daily_series=dxy, monthly_series=fn.standardize(cftc_mm_copper).shift(1)).dropna()
 
+copper_cash = fn.filter_data(fn.get_datasets_csv(path="datasets/Cash_Copper_LME.csv", name="COPPER_CASH"), start=INICIO, end=FIM)
+cash_3M_copper = fn.standardize(copper_3M['COPPER_3M'] - copper_cash['COPPER_CASH']).rename('CASH_3M_COPPER')
+
+aluminium_cash = fn.filter_data(fn.get_datasets_csv(path="datasets/Cash_Aluminium_LME.csv", name="ALUMINIUM_CASH"), start=INICIO, end=FIM)
+cash_3M_aluminium = fn.standardize(aluminium_3M['ALUMINIUM_3M'] - aluminium_cash['ALUMINIUM_CASH']).rename('CASH_3M_ALUMINIUM')
+
+inventory_lme_copper = fn.filter_data(fn.get_datasets_csv(path="datasets/Stock_Copper_LME.csv", name="INVENTORY_COPPER_LME"), start=INICIO, end=FIM)
+inventory_lme_copper = fn.standardize(inventory_lme_copper)
+
+inventory_shfe_copper = fn.filter_data(fn.get_datasets_csv(path="datasets/Stock_Copper_SHFE.csv", name="INVENTORY_COPPER_SHFE"), start=INICIO, end=FIM)
+inventory_shfe_copper = fn.standardize(inventory_shfe_copper)
+
 
 # Cria a variavel X_all do modelo, contendo todos fatores
 # Depois, para cada commoditie, usará fatores especificos desta variavel
-X_all = pd.concat([
+panel = pd.concat([
+    copper_3M,
     brent,
     UST_10Y,
     vix,
@@ -60,4 +78,22 @@ X_all = pd.concat([
     cftc_mm_copper
 ], axis=1).dropna()
 
-print(X_all)
+panel_copper = pd.concat([
+    copper_3M,
+    cash_3M_copper,
+    inventory_lme_copper, inventory_shfe_copper,
+    cftc_mm_copper,
+    brent,
+    vix,
+    UST_10Y,
+    ind_prod,
+    dxy,
+    pmi_china,
+], axis=1).dropna()
+
+# Estimação OLS multifatorial
+Y = panel_copper['COPPER_3M']
+X = add_constant(panel_copper.drop(columns='COPPER_3M'), has_constant="add")
+ols = OLS(Y, X).fit()
+print(ols.summary())
+

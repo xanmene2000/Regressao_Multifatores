@@ -353,8 +353,25 @@ def get_cftc_mm_nasdaq(api_key: str, code: str, name: str) -> pd.Series:
     # Net Managed Money
     df["mm_net"] = df["money_manager_longs"] - df["money_manager_shorts"]
 
+    df.to_csv(f'datasets/managed_money_{code}.csv')
+
     s = df["mm_net"]
 
     s.name = name
+    
+    return s
+
+def get_datasets_csv(path:str, name: str):
+    df = pd.read_csv(path)
+
+    # Converte datas e define como índice
+    df["Date"] = pd.to_datetime(df["Date"])
+    df = df.set_index("Date").sort_index()
+
+    # Remove duplicatas e converte para float
+    df = df.astype(float)
+
+    s = df.dropna()
+    s.columns = [name]
     
     return s
